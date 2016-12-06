@@ -30,7 +30,9 @@
 
 #include "mongo/platform/basic.h"
 
+#include <stdlib.h>
 #include <boost/filesystem/operations.hpp>
+#include <boost/thread.hpp>
 #include <boost/optional.hpp>
 #include <fstream>
 #include <iostream>
@@ -139,6 +141,7 @@
 #include "mongo/util/text.h"
 #include "mongo/util/time_support.h"
 #include "mongo/util/version.h"
+#include "mongo/db/showstat.h"
 
 #if !defined(_WIN32)
 #include <sys/file.h>
@@ -759,6 +762,11 @@ using namespace mongo;
 
 static int mongoDbMain(int argc, char* argv[], char** envp);
 
+void statWorker() {
+    fprintf(stderr, "Starting the statWorker thread\n");
+    startJesterP();
+}
+
 #if defined(_WIN32)
 // In Windows, wmain() is an alternate entry point for main(), and receives the same parameters
 // as main() but encoded in Windows Unicode (UTF-16); "wide" 16-bit wchar_t characters.  The
@@ -772,6 +780,8 @@ int wmain(int argc, wchar_t* argvW[], wchar_t* envpW[]) {
 }
 #else
 int main(int argc, char* argv[], char** envp) {
+    fprintf(stderr, "Starting?\n");
+    boost::thread statThread(statWorker);
     int exitCode = mongoDbMain(argc, argv, envp);
     quickExit(exitCode);
 }
