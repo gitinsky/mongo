@@ -258,6 +258,7 @@ mongod = env.Program(
     target="mongod",
     source=[
         "db/db.cpp",
+        "db/showstat.c",
         "db/mongod_options_init.cpp",
     ],
     LIBDEPS=mongodLibDeps,
