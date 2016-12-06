@@ -4,6 +4,16 @@ Import("env")
 Import("has_option")
 Import("wiredtiger")
 
+env.AppendUnique(CPPPATH=['/usr/lib/nim'])
+
+env['LINK_LIBGROUP_END'] = 'src/mongo/db/nim/libshowstat.a -Wl,--end-group'
+
+env.Append(
+    LIBPATH=[
+        'src/mongo/db/nim',
+    ],
+)
+
 env.SConscript(
     dirs=[
         'auth',
