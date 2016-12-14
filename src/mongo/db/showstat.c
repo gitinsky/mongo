@@ -12,3 +12,11 @@ void incLockWTCounterP(void) {
 void incLockMMV1CounterP(void) {
     incLockMMV1Counter();
 }
+
+void incLockWTGlobalCounterP(void) {
+    incLockWTGlobalCounter();
+}
+
+void incLockMMV1GlobalCounterP(void) {
+    incLockMMV1GlobalCounter();
+}
