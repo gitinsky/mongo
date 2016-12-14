@@ -43,6 +43,8 @@
 #include "mongo/util/log.h"
 #include "mongo/util/mongoutils/str.h"
 
+#include "mongo/db/showstat.h"
+
 namespace mongo {
 namespace {
 
@@ -293,6 +295,11 @@ Locker::ClientState LockerImpl<IsForMMAPV1>::getClientState() const {
 
 template <bool IsForMMAPV1>
 LockResult LockerImpl<IsForMMAPV1>::lockGlobal(LockMode mode, unsigned timeoutMs) {
+    if(IsForMMAPV1) {
+        incLockMMV1GlobalCounterP();
+    } else {
+        incLockWTGlobalCounterP();
+    }
     LockResult result = lockGlobalBegin(mode);
     if (result == LOCK_WAITING) {
         result = lockGlobalComplete(timeoutMs);
@@ -431,6 +438,11 @@ LockResult LockerImpl<IsForMMAPV1>::lock(ResourceId resId,
                                          LockMode mode,
                                          unsigned timeoutMs,
                                          bool checkDeadlock) {
+    if(IsForMMAPV1) {
+        incLockMMV1CounterP();
+    } else {
+        incLockWTCounterP();
+    }
     const LockResult result = lockBegin(resId, mode);
 
     // Fast, uncontended path
