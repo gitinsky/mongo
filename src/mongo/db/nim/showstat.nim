@@ -5,15 +5,31 @@ const
 
 var
   statRequestChan: Channel[int]
+  locksWTChan: Channel[int]
+  locksMMV1Chan: Channel[int]
   promChan: Channel[Prometheus]
+
+proc incLockWTCounter() {.exportc.} =
+  send(locksWTChan, 1)
+
+proc incLockMMV1Counter() {.exportc.} =
+  send(locksMMV1Chan, 1)
 
 proc statsProc() {.thread.} =
   let prom = newPrometheus()
   var localCounter = prom.newCounter("mongo_nim_http_reqs_counter", "Number of HTTP requests.")
+  var locksWTCounter = prom.newCounter("mongo_nim_locks_wt_counter", "Number of locks in WT.")
+  var locksMMV1Counter = prom.newCounter("mongo_nim_locks_mmv1_counter", "Number of locks in MMAPV1.")
   var latencyHistogram = prom.newHistogram("mongo_nim_http_reqs_latency", "Latency of HTTP requests in millis.", bucketMargins)
   var result: bool
   var latency: float
   while true:
+    let (result1, _) = tryRecv(locksWTChan)
+    if result1:
+      locksWTCounter.increment()
+    let (result3, _) = tryRecv(locksMMV1Chan)
+    if result3:
+      locksMMV1Counter.increment()
     let (result2, _) = tryRecv(statRequestChan)
     if result2:
       send(promChan, prom)
@@ -23,6 +39,8 @@ proc startJester() {.exportc.} =
   var statsThread: Thread[void]
   open(statRequestChan)
   open(promChan)
+  open(locksWTChan)
+  open(locksMMV1Chan)
   createThread(statsThread, statsProc)
 
   routes:
