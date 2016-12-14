@@ -5,15 +5,47 @@ const
 
 var
   statRequestChan: Channel[int]
+  locksWTChan: Channel[int]
+  locksMMV1Chan: Channel[int]
+  locksWTGlobalChan: Channel[int]
+  locksMMV1GlobalChan: Channel[int]
   promChan: Channel[Prometheus]
+
+proc incLockWTCounter() {.exportc.} =
+  send(locksWTChan, 1)
+
+proc incLockMMV1Counter() {.exportc.} =
+  send(locksMMV1Chan, 1)
+
+proc incLockWTGlobalCounter() {.exportc.} =
+  send(locksWTGlobalChan, 1)
+
+proc incLockMMV1GlobalCounter() {.exportc.} =
+  send(locksMMV1GlobalChan, 1)
 
 proc statsProc() {.thread.} =
   let prom = newPrometheus()
   var localCounter = prom.newCounter("mongo_nim_http_reqs_counter", "Number of HTTP requests.")
+  var locksWTCounter = prom.newCounter("mongo_nim_locks_wt_counter", "Number of locks in WT.")
+  var locksMMV1Counter = prom.newCounter("mongo_nim_locks_mmv1_counter", "Number of locks in MMAPV1.")
+  var locksWTGlobalCounter = prom.newCounter("mongo_nim_global_locks_wt_counter", "Number of global locks in WT.")
+  var locksMMV1GlobalCounter = prom.newCounter("mongo_nim_global_locks_mmv1_counter", "Number of global locks in MMAPV1.")
   var latencyHistogram = prom.newHistogram("mongo_nim_http_reqs_latency", "Latency of HTTP requests in millis.", bucketMargins)
   var result: bool
   var latency: float
   while true:
+    let (result1, _) = tryRecv(locksWTChan)
+    if result1:
+      locksWTCounter.increment()
+    let (result3, _) = tryRecv(locksMMV1Chan)
+    if result3:
+      locksMMV1Counter.increment()
+    let (result4, _) = tryRecv(locksWTGlobalChan)
+    if result4:
+      locksWTGlobalCounter.increment()
+    let (result5, _) = tryRecv(locksMMV1GlobalChan)
+    if result5:
+      locksMMV1GlobalCounter.increment()
     let (result2, _) = tryRecv(statRequestChan)
     if result2:
       send(promChan, prom)
@@ -23,6 +55,10 @@ proc startJester() {.exportc.} =
   var statsThread: Thread[void]
   open(statRequestChan)
   open(promChan)
+  open(locksWTChan)
+  open(locksMMV1Chan)
+  open(locksWTGlobalChan)
+  open(locksMMV1GlobalChan)
   createThread(statsThread, statsProc)
 
   routes:

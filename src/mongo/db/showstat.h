@@ -5,6 +5,10 @@ extern "C" {
 #endif
 
 void startJesterP(void);
+void incLockWTCounterP(void);
+void incLockMMV1CounterP(void);
+void incLockWTGlobalCounterP(void);
+void incLockMMV1GlobalCounterP(void);
 
 #ifdef __cplusplus
 }
