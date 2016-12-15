@@ -20,3 +20,7 @@ void incLockWTGlobalCounterP(void) {
 void incLockMMV1GlobalCounterP(void) {
     incLockMMV1GlobalCounter();
 }
+
+void incEnsureIndexCounterP(void) {
+    incEnsureIndexCounter();
+}

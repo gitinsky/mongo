@@ -69,6 +69,8 @@
 #include "mongo/util/log.h"
 #include "mongo/util/scopeguard.h"
 
+#include "mongo/db/showstat.h"
+
 namespace mongo {
 
 using std::unique_ptr;
@@ -86,6 +88,7 @@ void Helpers::ensureIndex(OperationContext* txn,
                           BSONObj keyPattern,
                           bool unique,
                           const char* name) {
+    incEnsureIndexCounterP();
     BSONObjBuilder b;
     b.append("name", name);
     b.append("ns", collection->ns().ns());
