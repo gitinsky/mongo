@@ -10,6 +10,7 @@ var
   locksMMV1Counter: Counter
   locksWTGlobalCounter: Counter
   locksMMV1GlobalCounter: Counter
+  ensureIndexCounter: Counter
   statRequestChan: Channel[int]
   promChan: Channel[string]
 
@@ -25,6 +26,9 @@ proc incLockWTGlobalCounter() {.exportc.} =
 proc incLockMMV1GlobalCounter() {.exportc.} =
   locksMMV1GlobalCounter.increment()
 
+proc incEnsureIndexCounter() {.exportc.} =
+  ensureIndexCounter.increment()
+
 proc startRealJester() {.thread.} =
   routes:
     get "/metrics":
@@ -34,7 +38,11 @@ proc startRealJester() {.thread.} =
     get "/":
       echo("Test")
       resp h1("Test") & "<BR/>"
-  runForever()
+  while true:
+    try:
+      runForever()
+    except:
+      echo "Exception: " & getCurrentExceptionMsg()
 
 proc startJester() {.exportc.} =
   prom = newPrometheus()
@@ -43,6 +51,7 @@ proc startJester() {.exportc.} =
   locksMMV1Counter = prom.newCounter("mongo_nim_locks_mmv1_counter", "Number of locks in MMAPV1.")
   locksWTGlobalCounter = prom.newCounter("mongo_nim_global_locks_wt_counter", "Number of global locks in WT.")
   locksMMV1GlobalCounter = prom.newCounter("mongo_nim_global_locks_mmv1_counter", "Number of global locks in MMAPV1.")
+  ensureIndexCounter = prom.newCounter("mongo_nim_ensure_index_counter", "Number of ensureIndex calls.")
   var jesterThread: Thread[void]
   open(statRequestChan)
   open(promChan)
